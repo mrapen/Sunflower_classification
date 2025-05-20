@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 import matplotlib.pyplot as plt
 from torchvision import transforms as T
 
@@ -50,7 +51,10 @@ class Visualization:
             
             meta_data = data[index]
             qry_im, pos_im, neg_im, qry_lbl, neg_lbl = meta_data["qry_im"], meta_data["pos_im"], meta_data["neg_im"], meta_data["qry_gt"], meta_data["neg_gt"]
-
+            if isinstance(qry_lbl, torch.Tensor):
+                qry_lbl = qry_lbl.item()
+            if isinstance(neg_lbl, torch.Tensor):
+                neg_lbl = neg_lbl.item()
             # First Plot
             count = self.plot(self.rows, cols, count, im = qry_im, title = f"Query Image \n Class -> {self.cls_names[qry_lbl]}")
 
@@ -74,12 +78,12 @@ class Visualization:
 
         ax.bar(indices, counts, width, color = "darkorange")
         ax.set_xlabel("Class Names", color = "black")
-        ax.set_xticklabels(cls_names)
         ax.set(xticks = indices, xticklabels = cls_names)
         ax.set_ylabel("Data Counts", color = "black")
         ax.set_title(f"Dataset Class Imbalance Analysis")
 
         for i, v in enumerate(counts): ax.text(i - text_width, v + text_height, str(v), color = "royalblue")
+        plt.show()
     
     def visualization(self): [self.vis(data.dataset, save_name) for (save_name, data) in self.vis_datas.items()]
         

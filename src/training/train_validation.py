@@ -118,17 +118,22 @@ class TrainValidation:
                 if idx == 1: break
             
             qry_ims, pos_ims, neg_ims, qry_im_lbls = self.to_device(batch)
+            
 
             qry_preds, loss = self.get_preds_loss(qry_ims, pos_ims, neg_ims, qry_im_lbls)
             self.eval_train_batch(qry_preds, qry_im_lbls, loss)
-            self.optimizer.zero_grad(); loss.backward(); self.optimizer.step()
+            self.optimizer.zero_grad()
+            if not loss.requires_grad:
+                loss = loss.clone().detach().requires_grad_(True)
+            loss.backward()
+            self.optimizer.step()
 
         tr_time = time() - tr_start; self.tr_times.append(tr_time)
         tr_loss_to_track = self.epoch_loss / self.tr_len
         tr_sens_to_track = self.sens / self.tr_len
         tr_spec_to_track = self.spec / self.tr_len
-        tr_acc_to_track  = self.epoch_acc  / len(self.tr_dl.dataset)
-        tr_f1_to_track   = self.epoch_f1   / self.tr_len
+        tr_acc_to_track = self.epoch_acc / len(self.tr_dl.dataset)
+        tr_f1_to_track = self.epoch_f1 / self.tr_len
         self.tr_losses.append(tr_loss_to_track); self.tr_accs.append(tr_acc_to_track); self.tr_f1s.append(tr_f1_to_track); self.tr_sens.append(tr_sens_to_track); self.tr_specs.append(tr_spec_to_track)
         
         print("\n~~~~~~~~~~~~~~~~~~~~ TRAIN PROCESS STATS ~~~~~~~~~~~~~~~~~~~~")

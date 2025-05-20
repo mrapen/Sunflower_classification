@@ -1,11 +1,13 @@
 import os
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import torch
 import timm
 import tkinter as tk
 from tkinter import filedialog, ttk
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import cv2
 from PIL import Image, ImageTk
 from torchvision import transforms
@@ -412,11 +414,6 @@ class ImageClassifierInterface:
 
 
 if __name__ == "__main__":
-    # Create Tkinter root window
     root = tk.Tk()
-    
-    # Create application
     app = ImageClassifierInterface(root)
-    
-    # Start the event loop
     root.mainloop()

@@ -21,7 +21,7 @@ def main():
     tfs = T.Compose([T.ToTensor(), T.Resize(size=(size, size), antialias=False), T.Normalize(mean=mean, std=std)])
 
     # Create DataLoaders
-    tr_dl, val_dl, ts_dl, classes, cls_counts = get_dls(root=root, transformations=tfs, bs=bs)
+    tr_dl, val_dl, ts_dl, classes, cls_counts = get_dls(root=root, transformations=tfs, batch_size=bs)
     print(f"Train dataloader length: {len(tr_dl)}")
     print(f"Validation dataloader length: {len(val_dl)}")
     print(f"Test dataloader length: {len(ts_dl)}")

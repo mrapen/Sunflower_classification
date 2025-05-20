@@ -1,4 +1,4 @@
-import os
+import os, torch
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -29,7 +29,7 @@ class TrainProcessSummary:
         
     def create_figure(self):    plt.figure(figsize = (10, 5))
 
-    def move2cpu(self, data):   return [d.cpu() for d in data]
+    def move2cpu(self, data):   return [d.cpu() if isinstance(d, torch.Tensor) else d for d in data]
 
     def plot(self, data1, data2, plot_name, c1, c2):
         

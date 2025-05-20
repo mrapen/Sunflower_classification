@@ -1,3 +1,5 @@
+"""This module is designed to read and process data"""
+
 import random
 import os
 import numpy as np
@@ -7,62 +9,86 @@ Image.MAX_IMAGE_PIXELS = None
 
 
 class CustomDataset(Dataset):
-    
-    def __init__(self, root, cls_names = None, transformations = None):
-   
+    """This class is designed to read and process data"""
+    def __init__(self, root, class_names = None, transformations = None):
         self.transformations = transformations
-        data_dir = os.path.join(os.path.dirname(__file__), '..', root)
-        self.imgs = np.load(os.path.join(data_dir, 'Sunflower_Stages.npy'))
-        self.lbls = np.load(os.path.join(data_dir, 'Sunflower_Stages_Labels.npy'))
-        self.cls_names, self.cls_counts, count = {} if not cls_names else cls_names, {}, 0
-            
-        for idx, (img, lbl) in enumerate(zip(self.imgs, self.lbls)):
-            lbl = lbl[0]
-            if self.cls_names is not None and lbl not in self.cls_names: self.cls_names[lbl] = count; count += 1
-            if lbl not in self.cls_counts: self.cls_counts[lbl] = 1
-            else: self.cls_counts[lbl] += 1
-            
-    def __len__(self): return len(self.imgs)
+        data_directory = os.path.join(os.path.dirname(__file__), '..', root)
+        self.images = np.load(os.path.join(data_directory, 'Sunflower_Stages.npy'))
+        self.labels = np.load(os.path.join(data_directory, 'Sunflower_Stages_Labels.npy'))
+        self.labels = self.labels.flatten()
+        self.class_names, self.class_counts, count = {} if not class_names else class_names, {}, 0
+        for _, (_, label) in enumerate(zip(self.images, self.labels)):
+            if type(label) is list:
+                label = label[0]
+            if self.class_names is not None and label not in self.class_names:
+                self.class_names[label] = count
+                count += 1
+            if label not in self.class_counts:
+                self.class_counts[label] = 1
+            else:
+                self.class_counts[label] += 1
+
+    def __len__(self):
+        return len(self.images)
 
     def get_pos_neg_ims(self, qry_label):
-        
-        pos_im_paths = [im for (im, lbl) in zip(self.imgs, self.lbls) if qry_label == lbl]
-        neg_im_paths = [im for (im, lbl) in zip(self.imgs, self.lbls) if qry_label != lbl]
-        
-        pos_rand_int = random.randint(a = 0, b = len(pos_im_paths) - 1)
-        neg_rand_int = random.randint(a = 0, b = len(neg_im_paths) - 1)
-        
-        return pos_im_paths[pos_rand_int], neg_im_paths[neg_rand_int], [lbl for lbl in self.lbls if lbl != qry_label][0][0]
+        """This method returns random items from lists of matching and
+        non-matching images and names for a classification name query"""
+        positive_images_paths = [image for (image, label) in
+                                zip(self.images, self.labels) if qry_label == label]
+        negative_images_paths = [image for (image, label) in
+                                zip(self.images, self.labels) if qry_label != label]
+        pos_rand_int = random.randint(a = 0, b = len(positive_images_paths) - 1)
+        neg_rand_int = random.randint(a = 0, b = len(negative_images_paths) - 1)
+        return (positive_images_paths[pos_rand_int],
+                negative_images_paths[neg_rand_int],
+                [label for label in self.labels if label != qry_label][0])
 
-    def __getitem__(self, idx):
-        
-        qry_im = self.imgs[idx]
-        qry_label = self.lbls[idx][0]
-
+    def __getitem__(self, index):
+        qry_im = self.images[index]
+        qry_label = self.labels[index]
+        if type(qry_label) is list:
+            qry_label = qry_label[0]
         pos_im, neg_im, neg_label = self.get_pos_neg_ims(qry_label = qry_label)
-
-        qry_gt = self.cls_names[qry_label]
-        neg_gt = self.cls_names[neg_label]
-
-        if self.transformations is not None: qry_im = self.transformations(qry_im); pos_im = self.transformations(pos_im); neg_im = self.transformations(neg_im)
-
+        qry_gt = self.class_names[qry_label]
+        neg_gt = self.class_names[neg_label]
+        if self.transformations is not None:
+            qry_im = self.transformations(qry_im)
+            pos_im = self.transformations(pos_im)
+            neg_im = self.transformations(neg_im)
         data = {}
-
         data["qry_im"] = qry_im
         data["qry_gt"] = qry_gt
         data["pos_im"] = pos_im
         data["neg_im"] = neg_im
         data["neg_gt"] = neg_gt
-            
         return data
 
-def get_dls(root, transformations, bs, split = [0.9, 0.05, 0.05], ns = 0):
-    
-    ds = CustomDataset(root = root, transformations = transformations)
-    cls_names = ds.cls_names; cls_counts = ds.cls_counts
-    total_len = len(ds); tr_len = int(total_len * split[0]); vl_len = int(total_len * split[1]); ts_len = total_len - tr_len - vl_len
-    tr_ds, vl_ds, ts_ds = random_split(dataset = ds, lengths = [tr_len, vl_len, ts_len])         
-
-    tr_dl, val_dl, ts_dl = DataLoader(tr_ds, batch_size = bs, shuffle = True, num_workers = ns), DataLoader(vl_ds, batch_size = bs, shuffle = False, num_workers = ns), DataLoader(ts_ds, batch_size = 1, shuffle = False, num_workers = ns)
-    
-    return tr_dl, val_dl, ts_dl, cls_names, cls_counts
+def get_dls(root, transformations, batch_size, split = None, num_workers = 0):
+    """This function is designed to read and
+    process data explicitly for training a model"""
+    if split is None:
+        split = [0.9, 0.05, 0.05]
+    dataset = CustomDataset(root = root, transformations = transformations)
+    class_names = dataset.class_names
+    class_counts = dataset.class_counts
+    total_len = len(dataset)
+    train_len = int(total_len * split[0])
+    validation_len = int(total_len * split[1])
+    test_len = total_len - train_len - validation_len
+    train_dataset, validation_dataset, test_dataset = random_split(
+        dataset = dataset,
+        lengths = [train_len, validation_len, test_len])
+    train_dl = DataLoader(train_dataset,
+                          batch_size = batch_size,
+                          shuffle = True,
+                          num_workers = num_workers)
+    validation_dataloader = DataLoader(validation_dataset,
+                                       batch_size = batch_size,
+                                       shuffle = False,
+                                       num_workers = num_workers)
+    test_dataloader = DataLoader(test_dataset,
+                                 batch_size = 1,
+                                 shuffle = False,
+                                 num_workers = num_workers)
+    return train_dl, validation_dataloader, test_dataloader, class_names, class_counts
