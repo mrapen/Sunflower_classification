@@ -1,7 +1,7 @@
 import torch
 import os, timm
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+#os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 from torchvision import transforms as T
 from data.dataset import get_dls
 from visualization.visualization import Visualization
@@ -17,7 +17,7 @@ def main():
 
     # Settings
     root = "dataset"
-    mean, std, size, bs = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225], 224, 2
+    mean, std, size, bs = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225], 224, 6
     tfs = T.Compose([T.ToTensor(), T.Resize(size=(size, size), antialias=False), T.Normalize(mean=mean, std=std)])
 
     # Create DataLoaders

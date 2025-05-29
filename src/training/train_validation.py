@@ -25,7 +25,7 @@ class TrainValidation:
         self.best_loss, self.threshold, self.not_improved = float(torch.inf), 0.01, 0
         self.stop_train, self.tr_len, self.val_len        = False, len(self.tr_dl), len(self.val_dl)
         self.cs_lbls = {"cos_pos": torch.tensor(1.).unsqueeze(0), "cos_neg": torch.tensor(-1.).unsqueeze(0)}
-        self.ckpt_path = f"{self.save_dir}/{self.data_name}_{self.run_name}_{self.model_name}_best_model.pth"
+        self.ckpt_path = os.path.join(os.path.dirname(__file__), f"{self.save_dir}\{self.data_name}_{self.run_name}_{self.model_name}_best_model.pth")
         print(f"{self.run_name}_{self.model_name}_bs_{self.bs}")
         
         print(str(datetime.datetime.now()).split(".")[0])

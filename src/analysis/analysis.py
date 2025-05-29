@@ -63,18 +63,12 @@ def analyze_class_performance(all_labels, all_preds, classes):
     Analyze per-class performance metrics
     """
     class_names = list(classes.keys())
-    class_indices = list(classes.values())
     # Calculate per-class accuracy
-    class_accuracies = {}
-    for i, class_name in enumerate(class_names):
-        mask = all_labels == class_indices[i]
-        if np.sum(mask) > 0:  # Avoid division by zero
-            class_accuracies[class_name] = np.mean(all_preds[mask] == all_labels[mask])
-        else:
-            class_accuracies[class_name] = 0
+    cm = m.confusion_matrix(all_labels, all_preds)
+    class_accuracies = cm.diagonal() / cm.sum(axis=1)
     # Plot class accuracies
     plt.figure(figsize=(10, 6))
-    plt.bar(class_accuracies.keys(), class_accuracies.values())
+    plt.bar(class_names, class_accuracies)
     plt.ylabel('Accuracy')
     plt.xlabel('Class')
     plt.title('Per-Class Accuracy')

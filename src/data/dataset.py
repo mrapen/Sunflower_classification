@@ -8,6 +8,36 @@ from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
 
 
+def get_dls(root, transformations, batch_size, split = None, num_workers = 0):
+    """This function is designed to read and
+    process data explicitly for training a model"""
+    if split is None:
+        split = [0.9, 0.05, 0.05]
+    dataset = CustomDataset(root = root, transformations = transformations)
+    class_names = dataset.class_names
+    class_counts = dataset.class_counts
+    total_len = len(dataset)
+    train_len = int(total_len * split[0])
+    validation_len = int(total_len * split[1])
+    test_len = total_len - train_len - validation_len
+    train_dataset, validation_dataset, test_dataset = random_split(
+        dataset = dataset,
+        lengths = [train_len, validation_len, test_len])
+    train_dl = DataLoader(train_dataset,
+                          batch_size = batch_size,
+                          shuffle = True,
+                          num_workers = num_workers)
+    validation_dataloader = DataLoader(validation_dataset,
+                                       batch_size = batch_size,
+                                       shuffle = False,
+                                       num_workers = num_workers)
+    test_dataloader = DataLoader(test_dataset,
+                                 batch_size = 1,
+                                 shuffle = False,
+                                 num_workers = num_workers)
+    return train_dl, validation_dataloader, test_dataloader, class_names, class_counts
+
+
 class CustomDataset(Dataset):
     """This class is designed to read and process data"""
     def __init__(self, root, class_names = None, transformations = None):
@@ -63,32 +93,3 @@ class CustomDataset(Dataset):
         data["neg_im"] = neg_im
         data["neg_gt"] = neg_gt
         return data
-
-def get_dls(root, transformations, batch_size, split = None, num_workers = 0):
-    """This function is designed to read and
-    process data explicitly for training a model"""
-    if split is None:
-        split = [0.9, 0.05, 0.05]
-    dataset = CustomDataset(root = root, transformations = transformations)
-    class_names = dataset.class_names
-    class_counts = dataset.class_counts
-    total_len = len(dataset)
-    train_len = int(total_len * split[0])
-    validation_len = int(total_len * split[1])
-    test_len = total_len - train_len - validation_len
-    train_dataset, validation_dataset, test_dataset = random_split(
-        dataset = dataset,
-        lengths = [train_len, validation_len, test_len])
-    train_dl = DataLoader(train_dataset,
-                          batch_size = batch_size,
-                          shuffle = True,
-                          num_workers = num_workers)
-    validation_dataloader = DataLoader(validation_dataset,
-                                       batch_size = batch_size,
-                                       shuffle = False,
-                                       num_workers = num_workers)
-    test_dataloader = DataLoader(test_dataset,
-                                 batch_size = 1,
-                                 shuffle = False,
-                                 num_workers = num_workers)
-    return train_dl, validation_dataloader, test_dataloader, class_names, class_counts
