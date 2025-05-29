@@ -1,0 +1,1 @@
+The method for determining the stage of sunflower development from photographs using deep neural networks is designed for automated, objective monitoring of the phenological state of plants at different stages of their growth. This approach reduces the human factor in the field observation process and ensures adaptive management of agricultural production.
